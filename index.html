@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- Crucial for Mobile Responsiveness -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>54 News TV - Live Stream</title>
 
@@ -167,10 +166,8 @@
 
   <!-- Breaking News Ticker -->
   <div class="ticker-wrap">
-    <div class="ticker">
-      <div class="ticker-item">Welcome to 54 News TV Live Broadcast</div>
-      <div class="ticker-item">• Streaming 24/7 HD News Coverage</div>
-      <div class="ticker-item">• Download our Mobile App for live updates on the go</div>
+    <div class="ticker" id="news-ticker">
+      <div class="ticker-item">Loading breaking news...</div>
     </div>
   </div>
 
@@ -199,6 +196,27 @@
   <footer>
     &copy; 2026 54 News TV. All rights reserved.
   </footer>
+
+  <!-- Script to load headlines dynamically -->
+  <script>
+    async function loadTicker() {
+      try {
+        const response = await fetch('./ticker.json?v=' + new Date().getTime());
+        const data = await response.json();
+        
+        if (data.headlines && data.headlines.length > 0) {
+          const tickerElement = document.getElementById('news-ticker');
+          tickerElement.innerHTML = data.headlines
+            .map(headline => `<div class="ticker-item">• ${headline}</div>`)
+            .join('');
+        }
+      } catch (error) {
+        console.error('Error fetching ticker items:', error);
+      }
+    }
+
+    loadTicker();
+  </script>
 
 </body>
 </html>

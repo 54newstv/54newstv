@@ -5,10 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>54 News TV - Admin Dashboard</title>
   
-  <!-- Netlify Identity Widget (Required for Login) -->
+  <!-- Netlify Identity Widget -->
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
+  <script>
+    // Point Netlify Identity directly to your Netlify app URL
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.init({
+        APIUrl: "https://YOUR-SITE-NAME.netlify.app/.netlify/identity" // Replace with your actual Netlify URL
+      });
+    }
+  </script>
+
   <!-- Decap CMS JavaScript Engine -->
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
 </body>

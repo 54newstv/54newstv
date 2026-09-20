@@ -30,13 +30,13 @@
     <h1>54 NEWS TV - TICKER CONTROL</h1>
 
     <div class="form-group">
-      <label for="repo-name">GitHub Repository:</label>
-      <input type="text" id="repo-name" value="shahjee/54newstv">
+      <label for="repo-name">GitHub Repository (username/repo):</label>
+      <input type="text" id="repo-name" placeholder="e.g. shahjee/54newstv">
     </div>
 
     <div class="form-group">
-      <label for="github-token">Access Token:</label>
-      <input type="password" id="github-token" value="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">
+      <label for="github-token">Personal Access Token:</label>
+      <input type="password" id="github-token" placeholder="Paste your token here">
     </div>
 
     <hr style="border-color: #334155; margin: 20px 0;">
@@ -52,6 +52,21 @@
 
   <script>
     let currentSha = '';
+
+    // Load saved settings from browser memory on startup
+    window.onload = function() {
+      const savedRepo = localStorage.getItem('54news_repo') || 'shahjee/54newstv';
+      const savedToken = localStorage.getItem('54news_token') || '';
+      
+      document.getElementById('repo-name').value = savedRepo;
+      document.getElementById('github-token').value = savedToken;
+
+      if (savedRepo && savedToken) {
+        loadCurrentHeadlines();
+      } else {
+        addHeadlineInput('Welcome to 54 News TV Live Broadcast');
+      }
+    };
 
     // Fetch existing headlines from ticker.json in GitHub
     async function loadCurrentHeadlines() {
@@ -106,9 +121,13 @@
       const repo = document.getElementById('repo-name').value.trim();
 
       if (!token || !repo) {
-        showStatus('Please verify your Repository and Access Token.', 'error');
+        showStatus('Please enter both your Repository and Access Token.', 'error');
         return;
       }
+
+      // Save credentials in browser local storage for future visits
+      localStorage.setItem('54news_repo', repo);
+      localStorage.setItem('54news_token', token);
 
       const inputs = document.querySelectorAll('.headline-input');
       const headlines = Array.from(inputs).map(input => input.value.trim()).filter(val => val !== '');
@@ -162,8 +181,8 @@
       statusDiv.innerText = message;
     }
 
-    // Auto-load current headlines on load
-    window.onload = loadCurrentHeadlines;
+    document.getElementById('repo-name').addEventListener('change', loadCurrentHeadlines);
+    document.getElementById('github-token').addEventListener('change', loadCurrentHeadlines);
   </script>
 </body>
 </html>

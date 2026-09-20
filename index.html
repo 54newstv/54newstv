@@ -6,9 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>54 News TV - Live Stream</title>
 
-  <!-- Video.js CSS for modern video player UI -->
-  <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
-
   <style>
     /* Global Reset & Dark Theme */
     * {
@@ -73,28 +70,21 @@
     .video-wrapper {
       position: relative;
       width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
       background: #000000;
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     }
 
-    /* Video.js Mobile Overrides */
-    .video-js {
-      width: 100% !important;
-      height: auto !important;
-      aspect-ratio: 16 / 9;
-    }
-    .vjs-big-play-button {
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      border-radius: 50% !important;
-      width: 2em !important;
-      height: 2em !important;
-      line-height: 2em !important;
-      background-color: rgba(239, 68, 68, 0.85) !important;
-      border: none !important;
+    /* YouTube Iframe Positioning */
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
     }
 
     /* Broadcast Info Section */
@@ -115,7 +105,7 @@
       line-height: 1.4;
     }
 
-    /* Ticker / News Banner (Mobile Friendly) */
+    /* Ticker / News Banner */
     .ticker-wrap {
       width: 100%;
       background-color: #ef4444;
@@ -157,7 +147,7 @@
       100% { transform: translate3d(-100%, 0, 0); }
     }
 
-    /* Tablet and Desktop Enhancements */
+    /* Desktop Enhancements */
     @media (min-width: 640px) {
       .logo-text { font-size: 1.5rem; }
       .stream-title { font-size: 1.3rem; }
@@ -187,29 +177,20 @@
   <!-- Main Content -->
   <main>
     <div class="video-wrapper">
-      <video
-        id="live-player"
-        class="video-js vjs-default-skin vjs-big-play-centered"
-        controls
-        autoplay
-        muted
-        playsinline
-        preload="auto"
-      >
-        <!-- Replace YOUR_ORACLE_PUBLIC_IP or domain with your stream link -->
-        <source src="http://YOUR_ORACLE_PUBLIC_IP:8080/hls/stream.m3u8" type="application/x-mpegURL" />
-        <p class="vjs-no-js">
-          To view this video please enable JavaScript, and consider upgrading to a web browser that
-          <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
-        </p>
-      </video>
+      <!-- YouTube Playlist Embed -->
+      <iframe 
+        src="https://www.youtube.com/embed?listType=playlist&list=PLOHmpERLe98s&autoplay=1&mute=1&playsinline=1" 
+        title="54 News TV Playlist" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+        allowfullscreen>
+      </iframe>
     </div>
 
     <!-- Video Metadata -->
     <div class="stream-info">
-      <h1 class="stream-title">54 News TV - 24/7 Live Stream</h1>
+      <h1 class="stream-title">54 News TV - 24/7 Demo Playlist</h1>
       <p class="stream-description">
-        Watch live continuous updates, breaking news coverage, and special broadcasts on 54 News TV.
+        Watch live continuous updates, breaking news coverage, and demo broadcasts on 54 News TV.
       </p>
     </div>
   </main>
@@ -218,9 +199,6 @@
   <footer>
     &copy; 2026 54 News TV. All rights reserved.
   </footer>
-
-  <!-- Video.js JavaScript Engine -->
-  <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 
 </body>
 </html>

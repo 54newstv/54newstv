@@ -1,0 +1,19 @@
+backend:
+  name: github
+  repo: YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME # Replace with your actual GitHub repo details
+  branch: main
+
+media_folder: "assets/uploads"
+
+collections:
+  - name: "ticker"
+    label: "News Ticker Headlines"
+    files:
+      - file: "ticker.json"
+        label: "Ticker Headlines"
+        name: "ticker_file"
+        fields:
+          - label: "Headlines"
+            name: "headlines"
+            widget: "list"
+            field: { label: "Headline Text", name: "headline", widget: "string" }

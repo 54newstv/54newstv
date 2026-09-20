@@ -1,420 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <!-- Crucial for Mobile Responsiveness -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>54 News TV - Live Stream</title>
 
-    <!-- SEO Meta Tags -->
-    <title>54 News TV | Latest News, Entertainment & Informative Programs</title>
-    <meta name="description" content="Stay updated with 54 News TV (54newstv.com) for breaking news, entertainment updates, and informative video programs. Watch live streams and playlist updates directly on our channel.">
-    <meta name="keywords" content="54 News TV, 54newstv, 54newstv.com, Pakistan news, live news, entertainment news, informative programs, latest updates, breaking news Pakistan, 54 news youtube">
-    <meta name="author" content="54 News TV">
-    <meta name="robots" content="index, follow">
+  <!-- Video.js CSS for modern video player UI -->
+  <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
 
-    <!-- Open Graph / Facebook / WhatsApp SEO -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://54newstv.com/">
-    <meta property="og:title" content="54 News TV | News, Entertainment & Informative Programs">
-    <meta property="og:description" content="Get the latest news updates, entertainment shows, and informative video programs on 54 News TV.">
-    <meta property="og:image" content="https://img.youtube.com/vi/PLOHmpERLe98s/maxresdefault.jpg">
-
-    <!-- Twitter Card SEO -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://54newstv.com/">
-    <meta name="twitter:title" content="54 News TV | News & Entertainment Channel">
-    <meta name="twitter:description" content="Watch breaking news and informative programs on 54 News TV.">
-    <meta name="twitter:image" content="https://img.youtube.com/vi/PLOHmpERLe98s/maxresdefault.jpg">
-
-    <!-- Structured Data (Schema.org) for Google Search SEO -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "NewsMediaOrganization",
-      "name": "54 News TV",
-      "url": "https://54newstv.com",
-      "logo": "https://54newstv.com/logo.png",
-      "sameAs": [
-        "https://www.youtube.com/@54Newstv"
-      ],
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "telephone": "+92-306-5270700",
-        "contactType": "Customer Support",
-        "areaServed": "PK",
-        "availableLanguage": ["Urdu", "English"]
-      }
+  <style>
+    /* Global Reset & Dark Theme */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    </script>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    /* Header Styling */
+    header {
+      background-color: #1e293b;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #ef4444;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-text {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+    }
+    .logo-highlight {
+      color: #ef4444;
+    }
+    .live-badge {
+      background-color: #ef4444;
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      animation: pulse 2s infinite;
+    }
 
-    <style>
-        :root {
-            --primary-red: #d32f2f;
-            --dark-bg: #121212;
-            --card-bg: #1e1e1e;
-            --text-light: #ffffff;
-            --text-muted: #b0b0b0;
-            --whatsapp-green: #25D366;
-        }
+    /* Main Container */
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 16px;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Roboto', sans-serif;
-        }
+    /* Responsive Video Wrapper (16:9 Aspect Ratio) */
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      background: #000000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
 
-        body {
-            background-color: var(--dark-bg);
-            color: var(--text-light);
-            line-height: 1.6;
-            padding-bottom: 50px;
-        }
+    /* Video.js Mobile Overrides */
+    .video-js {
+      width: 100% !important;
+      height: auto !important;
+      aspect-ratio: 16 / 9;
+    }
+    .vjs-big-play-button {
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      border-radius: 50% !important;
+      width: 2em !important;
+      height: 2em !important;
+      line-height: 2em !important;
+      background-color: rgba(239, 68, 68, 0.85) !important;
+      border: none !important;
+    }
 
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
+    /* Broadcast Info Section */
+    .stream-info {
+      margin-top: 16px;
+      background-color: #1e293b;
+      padding: 16px;
+      border-radius: 12px;
+    }
+    .stream-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .stream-description {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
 
-        /* --- Header & Navigation --- */
-        header {
-            background-color: #000000;
-            border-bottom: 2px solid var(--primary-red);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
+    /* Ticker / News Banner (Mobile Friendly) */
+    .ticker-wrap {
+      width: 100%;
+      background-color: #ef4444;
+      color: #ffffff;
+      overflow: hidden;
+      height: 36px;
+      line-height: 36px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .ticker {
+      display: inline-block;
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: ticker 25s linear infinite;
+    }
+    .ticker-item {
+      display: inline-block;
+      padding: 0 20px;
+    }
 
-        .header-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-        }
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.8rem;
+      color: #64748b;
+      background-color: #0f172a;
+    }
 
-        .logo h1 {
-            font-size: 28px;
-            font-weight: 900;
-            color: #fff;
-            letter-spacing: 1px;
-        }
+    /* CSS Animations */
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    @keyframes ticker {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-100%, 0, 0); }
+    }
 
-        .logo h1 span {
-            color: var(--primary-red);
-            background: #fff;
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin-left: 4px;
-        }
-
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 20px;
-        }
-
-        nav a {
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        nav a:hover {
-            color: var(--primary-red);
-        }
-
-        /* --- News Ticker --- */
-        .ticker-container {
-            background-color: #1a1a1a;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            border-bottom: 1px solid #333;
-            height: 40px;
-        }
-
-        .ticker-title {
-            background-color: var(--primary-red);
-            color: #fff;
-            padding: 0 15px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            font-weight: bold;
-            font-size: 14px;
-            text-transform: uppercase;
-            white-space: nowrap;
-            z-index: 10;
-        }
-
-        .ticker-wrap {
-            width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
-        .ticker-move {
-            display: inline-block;
-            white-space: nowrap;
-            padding-left: 100%;
-            animation: ticker 30s linear infinite;
-        }
-
-        .ticker-item {
-            display: inline-block;
-            padding: 0 20px;
-            font-size: 15px;
-            color: #e0e0e0;
-        }
-
-        .ticker-item i {
-            color: var(--primary-red);
-            margin-right: 8px;
-        }
-
-        @keyframes ticker {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-100%, 0, 0); }
-        }
-
-        .ticker-wrap:hover .ticker-move {
-            animation-play-state: paused;
-        }
-
-        /* --- Main Content --- */
-        .container {
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-
-        .section-title {
-            font-size: 24px;
-            margin-bottom: 20px;
-            border-left: 4px solid var(--primary-red);
-            padding-left: 10px;
-            font-weight: 700;
-        }
-
-        /* --- Video Grid Area --- */
-        .main-layout {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-        }
-
-        .video-player-container {
-            background-color: var(--card-bg);
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-
-        .responsive-iframe {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-            height: 0;
-            overflow: hidden;
-        }
-
-        .responsive-iframe iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
-
-        .video-details {
-            padding: 20px;
-        }
-
-        .video-details h2 {
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-
-        .video-details p {
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        /* --- Sidebar Categories --- */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            padding: 20px;
-            border-radius: 8px;
-            border-top: 3px solid var(--primary-red);
-        }
-
-        .card h3 {
-            margin-bottom: 12px;
-            font-size: 18px;
-        }
-
-        .card p {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-
-        .btn-subscribe {
-            display: inline-block;
-            background-color: var(--primary-red);
-            color: #fff;
-            padding: 10px 18px;
-            border-radius: 5px;
-            font-weight: bold;
-            text-align: center;
-            width: 100%;
-            transition: background 0.3s;
-        }
-
-        .btn-subscribe:hover {
-            background-color: #b71c1c;
-        }
-
-        /* --- Floating WhatsApp Button --- */
-        .whatsapp-float {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            background-color: var(--whatsapp-green);
-            color: white;
-            border-radius: 50px;
-            text-align: center;
-            font-size: 24px;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.4);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            gap: 10px;
-            transition: transform 0.3s;
-        }
-
-        .whatsapp-float:hover {
-            transform: scale(1.05);
-            color: white;
-        }
-
-        .whatsapp-float span {
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        /* --- Responsive Styles --- */
-        @media (max-width: 768px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-            }
-
-            .header-container {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .whatsapp-float span {
-                display: none;
-            }
-
-            .whatsapp-float {
-                padding: 15px;
-            }
-        }
-    </style>
+    /* Tablet and Desktop Enhancements */
+    @media (min-width: 640px) {
+      .logo-text { font-size: 1.5rem; }
+      .stream-title { font-size: 1.3rem; }
+      main { padding: 24px 16px; }
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Header Section -->
-    <header>
-        <div class="header-container">
-            <div class="logo">
-                <a href="/"><h1>54 NEWS <span>TV</span></h1></a>
-            </div>
-            <nav>
-                <ul>
-                    <li><a href="#latest">News</a></li>
-                    <li><a href="#entertainment">Entertainment</a></li>
-                    <li><a href="#programs">Programs</a></li>
-                    <li><a href="https://www.youtube.com/@54Newstv" target="_blank" rel="noopener">YouTube</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+  <!-- Top Header -->
+  <header>
+    <div class="logo-container">
+      <div class="logo-text"><span class="logo-highlight">54 NEWS</span> TV</div>
+    </div>
+    <div class="live-badge">● LIVE</div>
+  </header>
 
-    <!-- Breaking News Ticker -->
-    <div class="ticker-container">
-        <div class="ticker-title"><i class="fas fa-bolt"></i> Breaking News</div>
-        <div class="ticker-wrap">
-            <div class="ticker-move">
-                <div class="ticker-item"><i class="fas fa-circle"></i> Welcome to 54 News TV - Your trusted source for News, Entertainment, and Informative Programs.</div>
-                <div class="ticker-item"><i class="fas fa-circle"></i> آج پیٹرول سستا ہے، کل کا پتہ نہیں۔</div>
-                <div class="ticker-item"><i class="fas fa-circle"></i> Contact us on WhatsApp +92 306 5270700 for news tips and inquiries.</div>
-            </div>
-        </div>
+  <!-- Breaking News Ticker -->
+  <div class="ticker-wrap">
+    <div class="ticker">
+      <div class="ticker-item">Welcome to 54 News TV Live Broadcast</div>
+      <div class="ticker-item">• Streaming 24/7 HD News Coverage</div>
+      <div class="ticker-item">• Download our Mobile App for live updates on the go</div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main>
+    <div class="video-wrapper">
+      <video
+        id="live-player"
+        class="video-js vjs-default-skin vjs-big-play-centered"
+        controls
+        autoplay
+        muted
+        playsinline
+        preload="auto"
+      >
+        <!-- Replace YOUR_ORACLE_PUBLIC_IP or domain with your stream link -->
+        <source src="http://YOUR_ORACLE_PUBLIC_IP:8080/hls/stream.m3u8" type="application/x-mpegURL" />
+        <p class="vjs-no-js">
+          To view this video please enable JavaScript, and consider upgrading to a web browser that
+          <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
+        </p>
+      </video>
     </div>
 
-    <!-- Main Content Container -->
-    <div class="container">
-        <h2 class="section-title" id="latest">Watch 54 News TV Live / Playlist</h2>
-        
-        <div class="main-layout">
-            <!-- Left Side: YouTube Embed Player -->
-            <div class="video-player-container">
-                <div class="responsive-iframe">
-                    <!-- YouTube Playlist Embed -->
-                    <iframe 
-                        src="https://www.youtube.com/embed/videoseries?list=PLOHmpERLe98s" 
-                        title="54 News TV YouTube Playlist" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                        allowfullscreen>
-                    </iframe>
-                </div>
-                <div class="video-details">
-                    <h2>54 News TV Playlist - Official Broadcasts</h2>
-                    <p>Stay informed with our continuous playlist featuring current events, top political news, entertainment highlights, and special informative shows.</p>
-                </div>
-            </div>
-
-            <!-- Right Side: Sidebar Cards -->
-            <div class="sidebar">
-                <div class="card">
-                    <h3><i class="fab fa-youtube" style="color: var(--primary-red);"></i> Subscribe to Channel</h3>
-                    <p>Don't miss out on breaking news updates and exclusive video broadcasts on YouTube.</p>
-                    <a href="https://www.youtube.com/@54Newstv?sub_confirmation=1" target="_blank" rel="noopener" class="btn-subscribe">Subscribe Now</a>
-                </div>
-
-                <div class="card" id="entertainment">
-                    <h3><i class="fas fa-film"></i> Entertainment & Programs</h3>
-                    <p>We produce informative shows, interviews, and cultural programs crafted for viewers in Pakistan and across the globe.</p>
-                </div>
-
-                <div class="card" id="programs">
-                    <h3><i class="fas fa-headset"></i> Send News Tips</h3>
-                    <p>Have news or a broadcast query? Connect with our editorial team directly via WhatsApp.</p>
-                    <p><strong>WhatsApp:</strong> +92 306 5270700</p>
-                </div>
-            </div>
-        </div>
+    <!-- Video Metadata -->
+    <div class="stream-info">
+      <h1 class="stream-title">54 News TV - 24/7 Live Stream</h1>
+      <p class="stream-description">
+        Watch live continuous updates, breaking news coverage, and special broadcasts on 54 News TV.
+      </p>
     </div>
+  </main>
 
-    <!-- WhatsApp Floating Action Button -->
-    <a href="https://wa.me/923065270700?text=Hello%2054%20News%20TV,%20I%20have%20an%20inquiry." class="whatsapp-float" target="_blank" rel="noopener" aria-label="Contact us on WhatsApp">
-        <i class="fab fa-whatsapp"></i>
-        <span>Chat on WhatsApp</span>
-    </a>
+  <!-- Footer -->
+  <footer>
+    &copy; 2026 54 News TV. All rights reserved.
+  </footer>
+
+  <!-- Video.js JavaScript Engine -->
+  <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 
 </body>
 </html>

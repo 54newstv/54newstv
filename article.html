@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Article - 54 News TV</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; line-height: 1.6; }
+    header { background: #1e293b; padding: 16px; border-bottom: 2px solid #ef4444; text-align: center; }
+    .logo { color: #fff; font-size: 1.5rem; font-weight: 800; text-decoration: none; }
+    .logo span { color: #ef4444; }
+    main { max-width: 800px; margin: 30px auto; padding: 0 16px; }
+    .back-btn { display: inline-block; color: #3b82f6; text-decoration: none; margin-bottom: 20px; font-weight: 600; }
+    h1 { font-size: 2rem; margin-bottom: 12px; color: #ffffff; }
+    .meta { font-size: 0.85rem; color: #94a3b8; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 12px; }
+    .story-image { width: 100%; max-height: 450px; object-fit: cover; border-radius: 12px; margin-bottom: 24px; display: none; }
+    .content { font-size: 1.1rem; color: #cbd5e1; white-space: pre-wrap; }
+    footer { text-align: center; padding: 20px; color: #64748b; font-size: 0.8rem; margin-top: 40px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="logo"><span>54 NEWS</span> TV</a>
+  </header>
+
+  <main>
+    <a href="/" class="back-btn">← Back to Live Stream</a>
+    <h1 id="article-title">Loading story...</h1>
+    <div class="meta" id="article-meta"></div>
+    <img id="article-image" class="story-image" alt="Story Image">
+    <div class="content" id="article-content"></div>
+  </main>
+
+  <footer>&copy; 2026 54 News TV. All rights reserved.</footer>
+
+  <script>
+    async function loadArticle() {
+      const params = new URLSearchParams(window.location.search);
+      const articleId = params.get('id');
+
+      if (!articleId) {
+        document.getElementById('article-title').innerText = 'Story Not Found';
+        return;
+      }
+
+      try {
+        const response = await fetch('./posts.json?v=' + new Date().getTime());
+        if (response.ok) {
+          const posts = await response.json();
+          const story = posts.find(p => p.id === articleId);
+
+          if (story) {
+            document.title = story.title + " - 54 News TV";
+            document.getElementById('article-title').innerText = story.title;
+            document.getElementById('article-meta').innerText = `Published on ${story.date} | By ${story.author || '54 News Desk'}`;
+            document.getElementById('article-content').innerText = story.content;
+
+            if (story.image) {
+              const imgEl = document.getElementById('article-image');
+              imgEl.src = story.image;
+              imgEl.style.display = 'block';
+            }
+          } else {
+            document.getElementById('article-title').innerText = 'Story Not Found';
+          }
+        }
+      } catch (err) {
+        document.getElementById('article-title').innerText = 'Error loading story';
+      }
+    }
+
+    loadArticle();
+  </script>
+</body>
+</html>

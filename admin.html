@@ -7,7 +7,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
-    .container { max-width: 650px; margin: 20px auto; background: #1e293b; padding: 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .container { max-width: 700px; margin: 20px auto; background: #1e293b; padding: 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
     h1 { font-size: 1.5rem; margin-bottom: 20px; color: #ef4444; text-align: center; font-weight: 800; }
     h2 { font-size: 1.1rem; color: #3b82f6; margin-bottom: 12px; font-weight: 700; }
     .form-group { margin-bottom: 16px; }
@@ -20,11 +20,19 @@
     .btn-add { background: #3b82f6; width: auto; padding: 8px 16px; margin-top: 0; }
     .btn-remove { background: #64748b; width: auto; padding: 8px 14px; margin-top: 0; }
     .btn-remove:hover { background: #ef4444; }
+    .btn-edit { background: #f59e0b; width: auto; padding: 6px 12px; font-size: 0.85rem; margin-top: 0; }
+    .btn-edit:hover { background: #d97706; }
+    .btn-del { background: #ef4444; width: auto; padding: 6px 12px; font-size: 0.85rem; margin-top: 0; }
+    .btn-cancel { background: #64748b; margin-top: 8px; }
     #status { margin-top: 16px; padding: 12px; border-radius: 6px; text-align: center; font-weight: 600; display: none; }
     .success { background: #166534; color: #4ade80; display: block !important; }
     .error { background: #991b1b; color: #fca5a5; display: block !important; }
     .info { background: #1e3a8a; color: #93c5fd; display: block !important; }
     hr { border-color: #334155; margin: 24px 0; }
+    .story-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .story-card-title { font-weight: 700; font-size: 0.95rem; color: #ffffff; }
+    .story-card-meta { font-size: 0.75rem; color: #94a3b8; }
+    .story-actions { display: flex; gap: 6px; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -53,8 +61,10 @@
 
     <hr>
 
-    <!-- Section 2: Article Publisher -->
-    <h2>📰 Publish News Article</h2>
+    <!-- Section 2: Article Publisher & Editor -->
+    <h2 id="form-header-title">📰 Publish News Article</h2>
+    <input type="hidden" id="editing-story-id" value="">
+
     <div class="form-group">
       <label>Story Title:</label>
       <input type="text" id="story-title" placeholder="e.g. Major Highway Expansion Announced">
@@ -76,16 +86,27 @@
       <textarea id="story-content" placeholder="Write full news story here..."></textarea>
     </div>
 
-    <button type="button" class="btn" onclick="publishStory()" style="background:#10b981;">🚀 Publish Story Live</button>
+    <button type="button" class="btn" id="btn-publish-story" onclick="publishStory()" style="background:#10b981;">🚀 Publish Story Live</button>
+    <button type="button" class="btn btn-cancel" id="btn-cancel-edit" onclick="resetStoryForm()" style="display:none;">Cancel Editing</button>
 
-    <!-- Live Output Log -->
+    <hr>
+
+    <!-- Section 3: Manage Published Stories -->
+    <h2>📂 Manage Published Articles</h2>
+    <button type="button" class="btn btn-add" onclick="loadManageStories()" style="margin-bottom: 12px;">🔄 Refresh Story List</button>
+    <div id="manage-stories-list">
+      <p style="color: #94a3b8; font-size: 0.9rem;">Click "Refresh Story List" or enter token to view stories.</p>
+    </div>
+
+    <!-- Status Messages -->
     <div id="status"></div>
   </div>
 
   <script>
     let currentSha = '';
+    let cachedPosts = [];
+    let cachedPostsSha = '';
 
-    // Load saved credentials & current ticker on page load
     window.onload = function() {
       const savedRepo = localStorage.getItem('54news_repo') || '54newstv/54newstv';
       const savedToken = localStorage.getItem('54news_token') || '';
@@ -95,6 +116,7 @@
 
       if (savedRepo && savedToken) {
         loadCurrentHeadlines();
+        loadManageStories();
       } else {
         addHeadlineInput('Welcome to 54 News TV Live Broadcast');
       }
@@ -105,8 +127,6 @@
       const repo = document.getElementById('repo-name').value.trim();
       const token = document.getElementById('github-token').value.trim();
       if (!repo || !token) return;
-
-      showStatus('Loading ticker headlines...', 'info');
 
       try {
         const response = await fetch(`https://api.github.com/repos/${repo}/contents/ticker.json`, {
@@ -125,15 +145,9 @@
           } else {
             addHeadlineInput('Welcome to 54 News TV Live Broadcast');
           }
-          showStatus('Loaded ticker headlines.', 'info');
-          setTimeout(() => { document.getElementById('status').style.display = 'none'; }, 2000);
-        } else {
-          addHeadlineInput('Welcome to 54 News TV Live Broadcast');
-          document.getElementById('status').style.display = 'none';
         }
       } catch (err) {
         addHeadlineInput('Welcome to 54 News TV Live Broadcast');
-        document.getElementById('status').style.display = 'none';
       }
     }
 
@@ -203,10 +217,93 @@
       }
     }
 
-    // --- SECTION 2: ARTICLE PUBLISHER FUNCTIONS ---
+    // --- SECTION 2 & 3: STORY MANAGEMENT (CREATE, EDIT, DELETE) ---
+    async function loadManageStories() {
+      const repo = document.getElementById('repo-name').value.trim();
+      const token = document.getElementById('github-token').value.trim();
+      const listContainer = document.getElementById('manage-stories-list');
+
+      if (!repo || !token) return;
+
+      listContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.9rem;">Loading published stories...</p>';
+
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/posts.json`, {
+          headers: { 'Authorization': `token ${token}` }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          cachedPostsSha = data.sha;
+          const decoded = decodeURIComponent(escape(atob(data.content)));
+          cachedPosts = JSON.parse(decoded);
+
+          renderStoryList();
+        } else {
+          listContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.9rem;">No posts.json found in repository.</p>';
+        }
+      } catch (err) {
+        listContainer.innerHTML = '<p style="color: #ef4444; font-size: 0.9rem;">Error loading stories list.</p>';
+      }
+    }
+
+    function renderStoryList() {
+      const listContainer = document.getElementById('manage-stories-list');
+      if (!cachedPosts || cachedPosts.length === 0) {
+        listContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.9rem;">No published articles yet.</p>';
+        return;
+      }
+
+      listContainer.innerHTML = cachedPosts.map(story => `
+        <div class="story-card">
+          <div>
+            <div class="story-card-title">${story.title}</div>
+            <div class="story-card-meta">Published: ${story.date || 'N/A'}</div>
+          </div>
+          <div class="story-actions">
+            <button type="button" class="btn btn-edit" onclick="editStory('${story.id}')">✏️ Edit</button>
+            <button type="button" class="btn btn-del" onclick="deleteStory('${story.id}')">🗑️ Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function editStory(id) {
+      const story = cachedPosts.find(p => p.id === id);
+      if (!story) return;
+
+      document.getElementById('editing-story-id').value = story.id;
+      document.getElementById('story-title').value = story.title || '';
+      document.getElementById('story-image-url').value = story.image || '';
+      document.getElementById('story-summary').value = story.summary || '';
+      document.getElementById('story-content').value = story.content || '';
+
+      document.getElementById('form-header-title').innerText = '✏️ Edit Article';
+      document.getElementById('btn-publish-story').innerText = '💾 Save & Update Article';
+      document.getElementById('btn-publish-story').style.background = '#f59e0b';
+      document.getElementById('btn-cancel-edit').style.display = 'block';
+
+      window.scrollTo({ top: 300, behavior: 'smooth' });
+    }
+
+    function resetStoryForm() {
+      document.getElementById('editing-story-id').value = '';
+      document.getElementById('story-title').value = '';
+      document.getElementById('story-image-url').value = '';
+      document.getElementById('story-summary').value = '';
+      document.getElementById('story-content').value = '';
+      document.getElementById('story-file').value = '';
+
+      document.getElementById('form-header-title').innerText = '📰 Publish News Article';
+      document.getElementById('btn-publish-story').innerText = '🚀 Publish Story Live';
+      document.getElementById('btn-publish-story').style.background = '#10b981';
+      document.getElementById('btn-cancel-edit').style.display = 'none';
+    }
+
     async function publishStory() {
       const repo = document.getElementById('repo-name').value.trim();
       const token = document.getElementById('github-token').value.trim();
+      const editingId = document.getElementById('editing-story-id').value;
       const title = document.getElementById('story-title').value.trim();
       const summary = document.getElementById('story-summary').value.trim();
       const content = document.getElementById('story-content').value.trim();
@@ -222,14 +319,14 @@
       localStorage.setItem('54news_token', token);
 
       try {
-        // Upload image file to images/ if selected
+        // Handle Image Upload if a file is attached
         if (fileInput.files.length > 0) {
-          showStatus('Uploading story image...', 'info');
+          showStatus('Uploading image file...', 'info');
           const file = fileInput.files[0];
           const fileName = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9.]/g, '_');
           const base64Content = await convertFileToBase64(file);
 
-          const imgUploadRes = await fetch(`https://api.github.com/repos/${repo}/contents/images/${fileName}`, {
+          const imgRes = await fetch(`https://api.github.com/repos/${repo}/contents/images/${fileName}`, {
             method: 'PUT',
             headers: {
               'Authorization': `token ${token}`,
@@ -242,77 +339,114 @@
             })
           });
 
-          if (imgUploadRes.ok) {
-            const imgData = await imgUploadRes.json();
+          if (imgRes.ok) {
+            const imgData = await imgRes.json();
             imageUrl = imgData.content.download_url;
-          } else {
-            showStatus('Image upload failed. Publishing without image...', 'error');
           }
         }
 
-        // Fetch existing posts.json
-        showStatus('Publishing article live...', 'info');
+        showStatus('Saving article changes...', 'info');
+
+        // Refresh posts list
         const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/posts.json`, {
           headers: { 'Authorization': `token ${token}` }
         });
 
-        let posts = [];
-        let postsSha = '';
-
         if (getRes.ok) {
           const data = await getRes.json();
-          postsSha = data.sha;
+          cachedPostsSha = data.sha;
           const decoded = decodeURIComponent(escape(atob(data.content)));
-          posts = JSON.parse(decoded);
+          cachedPosts = JSON.parse(decoded);
         }
 
-        // Add new post object
-        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-        const newPost = {
-          id: slug + '-' + Date.now().toString().slice(-4),
-          title: title,
-          summary: summary,
-          image: imageUrl || '',
-          content: content,
-          date: new Date().toISOString().split('T')[0],
-          author: "54 News Desk"
-        };
-
-        posts.unshift(newPost);
+        if (editingId) {
+          // UPDATE EXISTING STORY
+          const index = cachedPosts.findIndex(p => p.id === editingId);
+          if (index !== -1) {
+            cachedPosts[index].title = title;
+            cachedPosts[index].summary = summary;
+            cachedPosts[index].content = content;
+            if (imageUrl) cachedPosts[index].image = imageUrl;
+          }
+        } else {
+          // ADD NEW STORY
+          const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+          const newPost = {
+            id: slug + '-' + Date.now().toString().slice(-4),
+            title: title,
+            summary: summary,
+            image: imageUrl || '',
+            content: content,
+            date: new Date().toISOString().split('T')[0],
+            author: "54 News Desk"
+          };
+          cachedPosts.unshift(newPost);
+        }
 
         // Commit updated posts.json to GitHub
-        const jsonContent = JSON.stringify(posts, null, 2);
-        const encodedContent = btoa(unescape(encodeURIComponent(jsonContent)));
+        await savePostsJsonToGitHub(repo, token, editingId ? `Update article: ${title}` : `Publish article: ${title}`);
+        
+        showStatus(editingId ? '✅ Article Updated Successfully!' : '✅ Article Published Live!', 'success');
+        resetStoryForm();
+        renderStoryList();
 
-        const putPayload = {
-          message: `Publish story: ${title}`,
-          content: encodedContent,
-          branch: 'main'
-        };
-        if (postsSha) putPayload.sha = postsSha;
-
-        const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/posts.json`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `token ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(putPayload)
-        });
-
-        if (putRes.ok) {
-          showStatus('✅ Article Published Live on 54newstv.com!', 'success');
-          document.getElementById('story-title').value = '';
-          document.getElementById('story-summary').value = '';
-          document.getElementById('story-content').value = '';
-          document.getElementById('story-image-url').value = '';
-          fileInput.value = '';
-        } else {
-          const errData = await putRes.json();
-          showStatus(`❌ Article Publish Failed: ${errData.message}`, 'error');
-        }
       } catch (err) {
         showStatus(`❌ Error: ${err.message}`, 'error');
+      }
+    }
+
+    async function deleteStory(id) {
+      if (!confirm('Are you sure you want to delete this news article?')) return;
+
+      const repo = document.getElementById('repo-name').value.trim();
+      const token = document.getElementById('github-token').value.trim();
+
+      if (!token || !repo) {
+        showStatus('Please enter Repository and Token.', 'error');
+        return;
+      }
+
+      showStatus('Deleting article...', 'info');
+
+      try {
+        // Filter out the deleted story
+        cachedPosts = cachedPosts.filter(p => p.id !== id);
+
+        await savePostsJsonToGitHub(repo, token, `Delete article ID: ${id}`);
+
+        showStatus('🗑️ Article Deleted Live!', 'success');
+        renderStoryList();
+      } catch (err) {
+        showStatus(`❌ Delete Failed: ${err.message}`, 'error');
+      }
+    }
+
+    async function savePostsJsonToGitHub(repo, token, commitMsg) {
+      const jsonContent = JSON.stringify(cachedPosts, null, 2);
+      const encodedContent = btoa(unescape(encodeURIComponent(jsonContent)));
+
+      const putPayload = {
+        message: commitMsg,
+        content: encodedContent,
+        branch: 'main'
+      };
+      if (cachedPostsSha) putPayload.sha = cachedPostsSha;
+
+      const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/posts.json`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(putPayload)
+      });
+
+      if (putRes.ok) {
+        const resData = await putRes.json();
+        cachedPostsSha = resData.content.sha;
+      } else {
+        const errData = await putRes.json();
+        throw new Error(errData.message);
       }
     }
 
@@ -331,8 +465,8 @@
       statusDiv.innerText = message;
     }
 
-    document.getElementById('repo-name').addEventListener('change', loadCurrentHeadlines);
-    document.getElementById('github-token').addEventListener('change', loadCurrentHeadlines);
+    document.getElementById('repo-name').addEventListener('change', () => { loadCurrentHeadlines(); loadManageStories(); });
+    document.getElementById('github-token').addEventListener('change', () => { loadCurrentHeadlines(); loadManageStories(); });
   </script>
 </body>
 </html>

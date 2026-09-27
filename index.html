@@ -315,6 +315,13 @@
         Watch live continuous updates, breaking news coverage, and special broadcasts on 54 News TV.
       </p>
     </div>
+    <!-- Latest Stories Section -->
+<div class="stream-info" style="margin-top: 24px;">
+  <h2 style="font-size: 1.2rem; color: #ef4444; margin-bottom: 16px;">📰 Read Latest Stories</h2>
+  <div id="stories-list" style="display: flex; flex-direction: column; gap: 12px;">
+    <p style="color: #94a3b8;">Loading latest stories...</p>
+  </div>
+</div>
   </main>
 
   <!-- Bottom Floating App Install Banner -->
@@ -406,6 +413,32 @@
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
       document.getElementById('bottom-banner').style.display = 'none';
     }
+    async function loadLatestStories() {
+  try {
+    const response = await fetch('./posts.json?v=' + new Date().getTime());
+    if (response.ok) {
+      const posts = await response.json();
+      const container = document.getElementById('stories-list');
+      if (posts.length > 0) {
+        container.innerHTML = posts.map(story => `
+          <a href="article.html?id=${story.id}" style="text-decoration: none; background: #0f172a; padding: 14px; border-radius: 8px; border-left: 3px solid #ef4444; display: flex; gap: 12px; align-items: center;">
+            ${story.image ? `<img src="${story.image}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">` : ''}
+            <div>
+              <h3 style="color: #ffffff; font-size: 1rem; margin-bottom: 4px;">${story.title}</h3>
+              <p style="color: #94a3b8; font-size: 0.85rem;">${story.summary || story.content.substring(0, 70) + '...'}</p>
+              <span style="color: #3b82f6; font-size: 0.75rem; display: inline-block; margin-top: 4px;">Read story →</span>
+            </div>
+          </a>
+        `).join('');
+      } else {
+        container.innerHTML = '<p style="color: #94a3b8;">No published stories yet.</p>';
+      }
+    }
+  } catch (err) {
+    console.error('Error loading stories:', err);
+  }
+}
+loadLatestStories();
   </script>
 
 </body>

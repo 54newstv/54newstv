@@ -6,46 +6,62 @@
   <title>54 News TV - Admin Portal</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
     .container { max-width: 650px; margin: 20px auto; background: #1e293b; padding: 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
     h1 { font-size: 1.5rem; margin-bottom: 20px; color: #ef4444; text-align: center; font-weight: 800; }
+    h2 { font-size: 1.1rem; color: #3b82f6; margin-bottom: 12px; font-weight: 700; }
     .form-group { margin-bottom: 16px; }
     label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; color: #94a3b8; }
     input[type="text"], input[type="password"], input[type="file"], textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #fff; font-size: 1rem; }
     textarea { height: 120px; resize: vertical; }
+    .headline-row { display: flex; gap: 8px; margin-bottom: 10px; }
     .btn { background: #ef4444; color: #fff; border: none; padding: 12px 20px; font-weight: 700; border-radius: 6px; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 10px; }
     .btn:hover { background: #dc2626; }
+    .btn-add { background: #3b82f6; width: auto; padding: 8px 16px; margin-top: 0; }
+    .btn-remove { background: #64748b; width: auto; padding: 8px 14px; margin-top: 0; }
+    .btn-remove:hover { background: #ef4444; }
     #status { margin-top: 16px; padding: 12px; border-radius: 6px; text-align: center; font-weight: 600; display: none; }
     .success { background: #166534; color: #4ade80; display: block !important; }
     .error { background: #991b1b; color: #fca5a5; display: block !important; }
     .info { background: #1e3a8a; color: #93c5fd; display: block !important; }
+    hr { border-color: #334155; margin: 24px 0; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>54 NEWS TV - CONTENT PUBLISHER</h1>
+    <h1>54 NEWS TV - CONTROL DASHBOARD</h1>
 
+    <!-- Global Settings -->
     <div class="form-group">
-      <label>GitHub Repository:</label>
-      <input type="text" id="repo-name" value="54newstv/54newstv">
+      <label for="repo-name">GitHub Repository (username/repo):</label>
+      <input type="text" id="repo-name" placeholder="e.g. 54newstv/54newstv" value="54newstv/54newstv">
     </div>
 
     <div class="form-group">
-      <label>Personal Access Token:</label>
+      <label for="github-token">Personal Access Token:</label>
       <input type="password" id="github-token" placeholder="Paste your token here">
     </div>
 
-    <hr style="border-color: #334155; margin: 20px 0;">
+    <hr>
 
-    <h2 style="font-size: 1.1rem; color: #3b82f6; margin-bottom: 12px;">📰 Publish New Story</h2>
+    <!-- Section 1: Ticker Control -->
+    <h2>📡 Live Ticker Items</h2>
+    <div id="headlines-container"></div>
+    <button type="button" class="btn btn-add" onclick="addHeadlineInput('')">+ Add Headline</button>
+    <button type="button" class="btn" onclick="saveHeadlines()">🚀 Update Ticker Live</button>
+
+    <hr>
+
+    <!-- Section 2: Article Publisher -->
+    <h2>📰 Publish News Article</h2>
     <div class="form-group">
       <label>Story Title:</label>
       <input type="text" id="story-title" placeholder="e.g. Major Highway Expansion Announced">
     </div>
-    
+
     <div class="form-group">
-      <label>Story Image (Select File OR Paste URL):</label>
+      <label>Story Image (Upload File OR Paste URL):</label>
       <input type="file" id="story-file" accept="image/*" style="margin-bottom: 8px;">
       <input type="text" id="story-image-url" placeholder="Or paste image URL (e.g., https://...)">
     </div>
@@ -54,21 +70,140 @@
       <label>Short Summary:</label>
       <input type="text" id="story-summary" placeholder="Brief one-line overview...">
     </div>
+
     <div class="form-group">
       <label>Full Story Content:</label>
       <textarea id="story-content" placeholder="Write full news story here..."></textarea>
     </div>
 
-    <button type="button" class="btn" onclick="publishStory()">🚀 Publish Article Live</button>
+    <button type="button" class="btn" onclick="publishStory()" style="background:#10b981;">🚀 Publish Story Live</button>
 
+    <!-- Live Output Log -->
     <div id="status"></div>
   </div>
 
   <script>
+    let currentSha = '';
+
+    // Load saved credentials & current ticker on page load
     window.onload = function() {
-      document.getElementById('github-token').value = localStorage.getItem('54news_token') || '';
+      const savedRepo = localStorage.getItem('54news_repo') || '54newstv/54newstv';
+      const savedToken = localStorage.getItem('54news_token') || '';
+      
+      document.getElementById('repo-name').value = savedRepo;
+      document.getElementById('github-token').value = savedToken;
+
+      if (savedRepo && savedToken) {
+        loadCurrentHeadlines();
+      } else {
+        addHeadlineInput('Welcome to 54 News TV Live Broadcast');
+      }
     };
 
+    // --- SECTION 1: TICKER FUNCTIONS ---
+    async function loadCurrentHeadlines() {
+      const repo = document.getElementById('repo-name').value.trim();
+      const token = document.getElementById('github-token').value.trim();
+      if (!repo || !token) return;
+
+      showStatus('Loading ticker headlines...', 'info');
+
+      try {
+        const response = await fetch(`https://api.github.com/repos/${repo}/contents/ticker.json`, {
+          headers: { 'Authorization': `token ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          currentSha = data.sha;
+          const decoded = decodeURIComponent(escape(atob(data.content)));
+          const content = JSON.parse(decoded);
+          
+          document.getElementById('headlines-container').innerHTML = '';
+          if (content.headlines && content.headlines.length > 0) {
+            content.headlines.forEach(text => addHeadlineInput(text));
+          } else {
+            addHeadlineInput('Welcome to 54 News TV Live Broadcast');
+          }
+          showStatus('Loaded ticker headlines.', 'info');
+          setTimeout(() => { document.getElementById('status').style.display = 'none'; }, 2000);
+        } else {
+          addHeadlineInput('Welcome to 54 News TV Live Broadcast');
+          document.getElementById('status').style.display = 'none';
+        }
+      } catch (err) {
+        addHeadlineInput('Welcome to 54 News TV Live Broadcast');
+        document.getElementById('status').style.display = 'none';
+      }
+    }
+
+    function addHeadlineInput(text = '') {
+      const container = document.getElementById('headlines-container');
+      const div = document.createElement('div');
+      div.className = 'headline-row';
+      div.innerHTML = `
+        <input type="text" class="headline-input" value="${text.replace(/"/g, '&quot;')}" placeholder="Enter news headline...">
+        <button type="button" class="btn btn-remove" onclick="this.parentElement.remove()">✕</button>
+      `;
+      container.appendChild(div);
+    }
+
+    async function saveHeadlines() {
+      const token = document.getElementById('github-token').value.trim();
+      const repo = document.getElementById('repo-name').value.trim();
+
+      if (!token || !repo) {
+        showStatus('Please enter both your Repository and Access Token.', 'error');
+        return;
+      }
+
+      localStorage.setItem('54news_repo', repo);
+      localStorage.setItem('54news_token', token);
+
+      const inputs = document.querySelectorAll('.headline-input');
+      const headlines = Array.from(inputs).map(input => input.value.trim()).filter(val => val !== '');
+
+      if (headlines.length === 0) {
+        showStatus('Please enter at least one headline before saving.', 'error');
+        return;
+      }
+
+      const jsonContent = JSON.stringify({ headlines: headlines }, null, 2);
+      const encodedContent = btoa(unescape(encodeURIComponent(jsonContent)));
+
+      showStatus('Updating live ticker...', 'info');
+
+      try {
+        const payload = {
+          message: 'Update news ticker from admin panel',
+          content: encodedContent,
+          branch: 'main'
+        };
+        if (currentSha) payload.sha = currentSha;
+
+        const response = await fetch(`https://api.github.com/repos/${repo}/contents/ticker.json`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          currentSha = resData.content.sha;
+          showStatus('✅ Ticker Updated Live on 54newstv.com!', 'success');
+        } else {
+          const errData = await response.json();
+          showStatus(`❌ Ticker Update Failed: ${errData.message}`, 'error');
+        }
+      } catch (err) {
+        showStatus(`❌ Network Error: ${err.message}`, 'error');
+      }
+    }
+
+    // --- SECTION 2: ARTICLE PUBLISHER FUNCTIONS ---
     async function publishStory() {
       const repo = document.getElementById('repo-name').value.trim();
       const token = document.getElementById('github-token').value.trim();
@@ -79,16 +214,17 @@
       let imageUrl = document.getElementById('story-image-url').value.trim();
 
       if (!token || !repo || !title || !content) {
-        showStatus('Please fill in Token, Title, and Content fields.', 'error');
+        showStatus('Please enter Token, Title, and Story Content.', 'error');
         return;
       }
 
+      localStorage.setItem('54news_repo', repo);
       localStorage.setItem('54news_token', token);
-      
+
       try {
-        // Step 1: Upload image file directly to GitHub if user selected a file
+        // Upload image file to images/ if selected
         if (fileInput.files.length > 0) {
-          showStatus('Uploading image to GitHub...', 'info');
+          showStatus('Uploading story image...', 'info');
           const file = fileInput.files[0];
           const fileName = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9.]/g, '_');
           const base64Content = await convertFileToBase64(file);
@@ -114,23 +250,23 @@
           }
         }
 
-        // Step 2: Fetch existing posts.json
-        showStatus('Publishing story live...', 'info');
+        // Fetch existing posts.json
+        showStatus('Publishing article live...', 'info');
         const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/posts.json`, {
           headers: { 'Authorization': `token ${token}` }
         });
 
         let posts = [];
-        let sha = '';
+        let postsSha = '';
 
         if (getRes.ok) {
           const data = await getRes.json();
-          sha = data.sha;
+          postsSha = data.sha;
           const decoded = decodeURIComponent(escape(atob(data.content)));
           posts = JSON.parse(decoded);
         }
 
-        // Step 3: Create new post object
+        // Add new post object
         const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
         const newPost = {
           id: slug + '-' + Date.now().toString().slice(-4),
@@ -144,7 +280,7 @@
 
         posts.unshift(newPost);
 
-        // Step 4: Push updated posts.json to GitHub
+        // Commit updated posts.json to GitHub
         const jsonContent = JSON.stringify(posts, null, 2);
         const encodedContent = btoa(unescape(encodeURIComponent(jsonContent)));
 
@@ -153,7 +289,7 @@
           content: encodedContent,
           branch: 'main'
         };
-        if (sha) putPayload.sha = sha;
+        if (postsSha) putPayload.sha = postsSha;
 
         const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/posts.json`, {
           method: 'PUT',
@@ -165,7 +301,7 @@
         });
 
         if (putRes.ok) {
-          showStatus('✅ Story & Image Published Live!', 'success');
+          showStatus('✅ Article Published Live on 54newstv.com!', 'success');
           document.getElementById('story-title').value = '';
           document.getElementById('story-summary').value = '';
           document.getElementById('story-content').value = '';
@@ -173,7 +309,7 @@
           fileInput.value = '';
         } else {
           const errData = await putRes.json();
-          showStatus(`❌ Publish Failed: ${errData.message}`, 'error');
+          showStatus(`❌ Article Publish Failed: ${errData.message}`, 'error');
         }
       } catch (err) {
         showStatus(`❌ Error: ${err.message}`, 'error');
@@ -189,11 +325,14 @@
       });
     }
 
-    function showStatus(msg, type) {
+    function showStatus(message, type) {
       const statusDiv = document.getElementById('status');
       statusDiv.className = type;
-      statusDiv.innerText = msg;
+      statusDiv.innerText = message;
     }
+
+    document.getElementById('repo-name').addEventListener('change', loadCurrentHeadlines);
+    document.getElementById('github-token').addEventListener('change', loadCurrentHeadlines);
   </script>
 </body>
 </html>
